@@ -1,0 +1,14 @@
+# Raspberry Pi photobooth dependencies
+#
+# gpiozero and picamera2 normally come from the Raspberry Pi OS apt packages
+# (python3-gpiozero, python3-picamera2). They're listed here for completeness;
+# prefer apt on the Pi over pip for those two.
+gpiozero
+picamera2
+python-escpos>=3.0      # 80mm thermal (ESC/POS) printing
+Pillow                  # image resize + dither for the receipt photo
+numpy                   # Atkinson dithering (usually already present via picamera2)
+
+# Optional: better local contrast (CLAHE) for receipt photos. If absent, the
+# script falls back to Pillow autocontrast automatically.
+# opencv-python-headless
