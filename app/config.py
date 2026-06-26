@@ -88,8 +88,8 @@ FONT_BUNGEE = "Bungee-Regular.ttf"   # the big "SCUPTEE" wordmark
 # Branding / copy for the scuptee receipt.
 WORDMARK = "SCUPTEE"
 TAGLINE = "INSERT MEMORY"
-ARTIST_HANDLE = "@scuptee.studio"          # shown under the QR (placeholder)
-QR_URL = "https://instagram.com/scuptee.studio"   # what the QR actually encodes
+ARTIST_HANDLE = "@bangbangcrafts"          # shown under the QR (the artist)
+QR_URL = "https://instagram.com/bangbangcrafts"   # what the QR actually encodes
 
 # Lucky numbers line (e.g. "LUCKY > 03 11 19 27 44").
 LUCKY_COUNT = 5          # how many numbers
@@ -98,7 +98,12 @@ LUCKY_MAX = 49           # numbers are 01..LUCKY_MAX, zero-padded to 2 digits
 # Fortune icon row (the little SVG glyphs). These print only if the optional
 # "cairosvg" library is installed; otherwise the icon row is skipped.
 ICON_DIR = "fortune_icons_svg/fortune_icons"
-ICON_COUNT = 5           # how many random icons to print across the receipt
+ICON_COUNT = 3           # how many random icons to print across the receipt
+
+# The mascot drawn in the header lockup, beside the wordmark. This is one of the
+# SVG files in ICON_DIR; it needs "cairosvg" too. If cairosvg is missing the
+# header falls back to the hand-drawn line-art robot.
+HEADER_ICON = "clown_cat.svg"
 
 # Console preview
 RECEIPT_COLS = 42        # character width of the ASCII receipt preview
