@@ -91,3 +91,21 @@ def _prep_image(photo_path):
     if DITHER == "atkinson":
         return _atkinson_dither(gray)
     return gray.convert("1")  # Floyd-Steinberg (Pillow built-in)
+
+
+def prep_photo(photo_path, width, aspect=(4, 5)):
+    """Enhance + dither a capture to a fixed WIDTH x (width*aspect) 1-bit image.
+
+    Unlike _prep_image (which keeps the photo's own ratio at full head width),
+    this center-crops to a fixed aspect ratio -- used by the scuptee receipt,
+    where the photo sits in a framed 4:5 box inside the layout.
+    """
+    from PIL import Image, ImageOps
+
+    img = ImageOps.exif_transpose(Image.open(photo_path))   # honour rotation
+    target_h = max(1, round(width * aspect[1] / aspect[0]))
+    img = ImageOps.fit(img, (width, target_h), method=Image.LANCZOS)  # crop-to-fill
+    gray = _enhance_gray(img)
+    if DITHER == "atkinson":
+        return _atkinson_dither(gray)
+    return gray.convert("1")

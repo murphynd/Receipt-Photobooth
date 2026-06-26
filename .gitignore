@@ -1,0 +1,14 @@
+# Python virtual environments (scratch tooling -- never commit these)
+.venv/
+venv/
+.render_venv/
+env/
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Captured photos and generated receipt previews
+photos/
+*_print.png
+*_receipt.png

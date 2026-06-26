@@ -11,9 +11,29 @@ running on a **Raspberry Pi 4B**. Flow:
 IDLE → BECKON (audio) → ARMED → CAPTURE → PRINT (thermal receipt) → COOLDOWN
 ```
 
-Main script: `photobooth.py`. State machine in `main()`. Hardware: PIR motion
+Main script: `app/photobooth.py`. State machine in `main()`. Hardware: PIR motion
 sensor (GPIO 17), Pi camera (picamera2), optional GPIO button (GPIO 27), and an
 80mm thermal receipt printer over USB.
+
+## Repo layout
+
+Everything the Pi needs to run lives in **`app/`** — that's the only folder you
+copy to the device. Everything else is supporting material that never ships.
+
+```
+app/    <- runtime: copy ONLY this to the Pi, run from inside it
+  photobooth.py config.py audio.py hardware.py imaging.py printing.py receipt.py
+  requirements.txt fortunes.txt magicsounds.wav
+  fonts/  fortune_icons_svg/
+docs/   <- design handoff, contact sheet, HTML preview (not needed to run)
+README.md  CLAUDE.md  LICENSE   <- repo meta
+```
+
+Run from inside `app/` so relative asset paths resolve:
+`cd app && python3 photobooth.py`. Some paths are resolved against the current
+working directory (`magicsounds.wav`, `photos/`, `fortunes.txt`) and some against
+the source dir (`fonts/`, `fortune_icons_svg/`); running from `app/` makes both
+the same directory, so everything just works.
 
 ## Hardware that's confirmed working
 

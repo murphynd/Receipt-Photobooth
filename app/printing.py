@@ -14,6 +14,7 @@ from config import (
     FORTUNES_FALLBACK,
     EMOJI_POOL,
     EMOJI_COUNT,
+    RECEIPT_STYLE,
     PRINTER_BACKEND,
     CUPS_PRINTER_NAME,
     PRINTER_USB_VENDOR,
@@ -192,6 +193,11 @@ def _escpos_receipt_bytes(photo_path, caption, fortune, emoji):
 # ----------------------------------------------------------------------------
 def print_receipt(prn, photo_path, caption):
     fortune = pick_fortune()
+
+    if RECEIPT_STYLE == "scuptee":
+        _print_scuptee(prn, photo_path, fortune)
+        return
+
     emoji = pick_emoji()
 
     # CUPS-raw path: build the ESC/POS bytes ourselves and pipe them to
@@ -218,6 +224,60 @@ def print_receipt(prn, photo_path, caption):
     except Exception as exc:
         print(f"[printer] print failed ({exc}); dumping to console")
         _console_receipt(photo_path, caption, fortune, emoji)
+
+
+# ----------------------------------------------------------------------------
+# Scuptee graphic receipt (the whole receipt is one bitmap)
+# ----------------------------------------------------------------------------
+def _print_scuptee(prn, photo_path, fortune):
+    """Build the full Scuptee receipt image and send it via the active backend."""
+    from receipt import build_receipt_image
+
+    img = build_receipt_image(photo_path, fortune)
+
+    if PRINTER_BACKEND == "cups":
+        try:
+            out = bytearray()
+            out += _ESC + b"@"            # initialize
+            out += _ESC + b"a" + b"\x01"  # center align
+            out += _raster_bytes(img)
+            out += b"\n\n\n"             # feed past the tear bar
+            out += _GS + b"V" + b"\x00"   # full cut
+            subprocess.run(["lp", "-d", CUPS_PRINTER_NAME],
+                           input=bytes(out), check=True)
+        except Exception as exc:
+            print(f"[printer] cups path failed ({exc}); saving preview")
+            _scuptee_console(img, photo_path)
+        return
+
+    if prn is None:
+        _scuptee_console(img, photo_path)
+        return
+    try:
+        prn.set(align="center")
+        prn.image(img)
+        prn.cut()
+    except Exception as exc:
+        print(f"[printer] print failed ({exc}); saving preview")
+        _scuptee_console(img, photo_path)
+
+
+def _scuptee_console(img, photo_path):
+    """No-hardware preview: save the full receipt PNG + ASCII it to stdout."""
+    preview_path = os.path.splitext(photo_path)[0] + "_receipt.png"
+    try:
+        img.save(preview_path)
+    except Exception as exc:
+        preview_path = None
+        print(f"[receipt] could not save preview ({exc})")
+    print("\n+" + "-" * (RECEIPT_COLS + 2) + "+")
+    for line in _ascii_art(img):
+        print("| " + line.ljust(RECEIPT_COLS) + " |")
+    print("+" + "-" * (RECEIPT_COLS + 2) + "+")
+    print("  ( -- printer would cut here -- )")
+    if preview_path:
+        print(f"  full-res receipt preview: {preview_path}")
+    print()
 
 
 # ----------------------------------------------------------------------------

@@ -67,7 +67,38 @@ FORTUNES_FALLBACK = [
     "Your reflection approves of you.",
 ]
 EMOJI_POOL = ["*", "@", "#", "%", "+", "~", "^", "o", "x", "=", "$", "&"]
-EMOJI_COUNT = 3          # how many random emoji to print across the receipt
+EMOJI_COUNT = 3          # how many random emoji to print across the receipt (classic style)
+
+# ----------------------------------------------------------------------------
+# Receipt design / layout
+# ----------------------------------------------------------------------------
+#   "scuptee" -> the full "Scuptee Arcade Pixel" graphic receipt (logo, framed
+#                photo, fortune block, itemized list, QR code, footer). The whole
+#                receipt is drawn as one 576px-wide bitmap and sent to the printer.
+#   "classic" -> the original simple text receipt (photo + caption + fortune).
+RECEIPT_STYLE = "scuptee"
+
+# Fonts for the scuptee design (TrueType files live in FONT_DIR).
+# VT323 + Bungee are the design's typefaces -- download once from Google Fonts.
+# If a font file is missing the code falls back to a default font (lower fidelity).
+FONT_DIR = "fonts"
+FONT_VT323 = "VT323-Regular.ttf"     # body text (pixel/terminal look)
+FONT_BUNGEE = "Bungee-Regular.ttf"   # the big "SCUPTEE" wordmark
+
+# Branding / copy for the scuptee receipt.
+WORDMARK = "SCUPTEE"
+TAGLINE = "INSERT MEMORY"
+ARTIST_HANDLE = "@scuptee.studio"          # shown under the QR (placeholder)
+QR_URL = "https://instagram.com/scuptee.studio"   # what the QR actually encodes
+
+# Lucky numbers line (e.g. "LUCKY > 03 11 19 27 44").
+LUCKY_COUNT = 5          # how many numbers
+LUCKY_MAX = 49           # numbers are 01..LUCKY_MAX, zero-padded to 2 digits
+
+# Fortune icon row (the little SVG glyphs). These print only if the optional
+# "cairosvg" library is installed; otherwise the icon row is skipped.
+ICON_DIR = "fortune_icons_svg/fortune_icons"
+ICON_COUNT = 5           # how many random icons to print across the receipt
 
 # Console preview
 RECEIPT_COLS = 42        # character width of the ASCII receipt preview
