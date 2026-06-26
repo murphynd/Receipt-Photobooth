@@ -100,9 +100,9 @@ LUCKY_MAX = 49           # numbers are 01..LUCKY_MAX, zero-padded to 2 digits
 ICON_DIR = "fortune_icons_svg/fortune_icons"
 ICON_COUNT = 3           # how many random icons to print across the receipt
 
-# The mascot drawn in the header lockup, beside the wordmark. This is one of the
-# SVG files in ICON_DIR; it needs "cairosvg" too. If cairosvg is missing the
-# header falls back to the hand-drawn line-art robot.
+# The header lockup draws a *random* SVG glyph from ICON_DIR beside the
+# wordmark (needs "cairosvg"). HEADER_ICON is just the fallback used if the
+# random pick fails; if cairosvg is missing the header uses the drawn robot.
 HEADER_ICON = "clown_cat.svg"
 
 # Console preview

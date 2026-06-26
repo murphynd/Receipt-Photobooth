@@ -319,10 +319,13 @@ def _pick_icons(n):
 
 
 def _header_icon(size):
-    """The mascot for the header lockup: the configured SVG (HEADER_ICON)
-    rasterized to ``size`` px, or None when cairosvg / the file is unavailable
-    (the caller then falls back to the hand-drawn robot)."""
-    return _render_icon(os.path.join(_HERE, ICON_DIR, HEADER_ICON), size)
+    """The mascot for the header lockup: a random SVG glyph rasterized to
+    ``size`` px. Falls back to the configured HEADER_ICON if the pick fails,
+    and returns None when cairosvg / the files are unavailable (the caller then
+    falls back to the hand-drawn robot)."""
+    picks = _pick_icons(1)
+    path = picks[0] if picks else os.path.join(_HERE, ICON_DIR, HEADER_ICON)
+    return _render_icon(path, size)
 
 
 # ----------------------------------------------------------------------------
@@ -421,11 +424,12 @@ def build_receipt_image(photo_path, fortune):
     y += _line_h(f["fortune_head"]) + px(8)
 
     # icon row -- three random glyphs across the receipt, the visual fortune
-    # (optional: only if cairosvg is installed, else this block is skipped)
-    icon_size = px(34)
+    # (optional: only if cairosvg is installed, else this block is skipped).
+    # Sized close to the header mascot so the row reads as the main event.
+    icon_size = px(66)
     icons = [im for im in (_render_icon(p, icon_size) for p in _pick_icons(ICON_COUNT)) if im]
     if icons:
-        gap = px(16)
+        gap = px(18)
         total = sum(im.width for im in icons) + gap * (len(icons) - 1)
         ix = CENTER - total / 2
         for im in icons:
