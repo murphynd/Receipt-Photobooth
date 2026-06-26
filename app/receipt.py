@@ -226,8 +226,13 @@ def _draw_robot(draw, ox, oy, scale):
         draw.ellipse([c[0] - rr, c[1] - rr, c[0] + rr, c[1] + rr],
                      outline=INK, width=w)
     def rrect(x, y, ww, hh, rad):
-        draw.rounded_rectangle([P(x, y), P(x + ww, y + hh)],
-                               radius=rad * scale, outline=INK, width=w)
+        box = [P(x, y), P(x + ww, y + hh)]
+        # rounded_rectangle was added in Pillow 8.2; fall back to a plain
+        # rectangle on older builds so the robot still draws instead of crashing.
+        if hasattr(draw, "rounded_rectangle"):
+            draw.rounded_rectangle(box, radius=rad * scale, outline=INK, width=w)
+        else:
+            draw.rectangle(box, outline=INK, width=w)
     def curve(pts):
         draw.line([P(x, y) for (x, y) in pts], fill=INK, width=w, joint="curve")
 

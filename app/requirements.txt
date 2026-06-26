@@ -6,7 +6,7 @@
 gpiozero
 picamera2
 python-escpos>=3.0      # 80mm thermal (ESC/POS) printing
-Pillow                  # image resize + dither for the receipt photo
+Pillow>=9.5             # image resize + dither; >=8.2 needed for rounded_rectangle
 numpy                   # Atkinson dithering (usually already present via picamera2)
 
 # Optional: better local contrast (CLAHE) for receipt photos. If absent, the
