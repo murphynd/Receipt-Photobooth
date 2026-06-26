@@ -18,6 +18,7 @@ This file is just the state-machine loop. The pieces live in:
     hardware.py  -- PIR, button, camera, capture
 """
 
+import os
 import time
 
 from config import CAPTION, INPUT_MODE, COOLDOWN_AFTER_PRINT, PRINTER_BACKEND
@@ -60,7 +61,15 @@ def main():
 
             countdown()
             photo_path = capture_photo()
-            print_receipt(prn, photo_path, CAPTION)
+            # The photo is only needed to build the receipt; don't keep it
+            # around (storage fills fast). Delete it once the receipt is sent.
+            try:
+                print_receipt(prn, photo_path, CAPTION)
+            finally:
+                try:
+                    os.remove(photo_path)
+                except OSError:
+                    pass
             time.sleep(COOLDOWN_AFTER_PRINT)
 
             pir.wait_for_no_motion()

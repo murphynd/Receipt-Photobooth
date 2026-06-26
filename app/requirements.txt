@@ -6,8 +6,12 @@
 gpiozero
 picamera2
 python-escpos>=3.0      # 80mm thermal (ESC/POS) printing
-Pillow                  # image resize + dither for the receipt photo
+Pillow>=9.5             # image resize + dither; >=8.2 needed for rounded_rectangle
 numpy                   # Atkinson dithering (usually already present via picamera2)
+qrcode                  # "follow the artist" QR block on the receipt
+cairosvg                # renders the SVG mascot + fortune-icon glyphs
+# cairosvg needs the system Cairo lib: sudo apt install libcairo2
+# (build headers libcairo2-dev only if pip has to compile cairocffi)
 
 # Optional: better local contrast (CLAHE) for receipt photos. If absent, the
 # script falls back to Pillow autocontrast automatically.

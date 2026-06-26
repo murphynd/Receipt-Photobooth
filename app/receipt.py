@@ -29,6 +29,7 @@ from config import (
     LUCKY_MAX,
     ICON_DIR,
     ICON_COUNT,
+    HEADER_ICON,
 )
 from imaging import prep_photo
 
@@ -226,8 +227,13 @@ def _draw_robot(draw, ox, oy, scale):
         draw.ellipse([c[0] - rr, c[1] - rr, c[0] + rr, c[1] + rr],
                      outline=INK, width=w)
     def rrect(x, y, ww, hh, rad):
-        draw.rounded_rectangle([P(x, y), P(x + ww, y + hh)],
-                               radius=rad * scale, outline=INK, width=w)
+        box = [P(x, y), P(x + ww, y + hh)]
+        # rounded_rectangle was added in Pillow 8.2; fall back to a plain
+        # rectangle on older builds so the robot still draws instead of crashing.
+        if hasattr(draw, "rounded_rectangle"):
+            draw.rounded_rectangle(box, radius=rad * scale, outline=INK, width=w)
+        else:
+            draw.rectangle(box, outline=INK, width=w)
     def curve(pts):
         draw.line([P(x, y) for (x, y) in pts], fill=INK, width=w, joint="curve")
 
@@ -312,6 +318,16 @@ def _pick_icons(n):
     return random.sample(files, min(n, len(files)))
 
 
+def _header_icon(size):
+    """The mascot for the header lockup: a random SVG glyph rasterized to
+    ``size`` px. Falls back to the configured HEADER_ICON if the pick fails,
+    and returns None when cairosvg / the files are unavailable (the caller then
+    falls back to the hand-drawn robot)."""
+    picks = _pick_icons(1)
+    path = picks[0] if picks else os.path.join(_HERE, ICON_DIR, HEADER_ICON)
+    return _render_icon(path, size)
+
+
 # ----------------------------------------------------------------------------
 # State generated per print job
 # ----------------------------------------------------------------------------
@@ -333,19 +349,23 @@ def build_receipt_image(photo_path, fortune):
     draw = ImageDraw.Draw(canvas)
     y = PAD
 
-    # 1) HEADER LOCKUP -- robot + wordmark, centered as a group --------------
-    robot_h = px(74)
-    robot_w = px(58)
+    # 1) HEADER LOCKUP -- mascot + wordmark, centered as a group -------------
+    mascot_h = px(74)
+    mascot = _header_icon(mascot_h)               # clown-cat SVG (None -> robot)
+    mascot_w = mascot.width if mascot is not None else px(58)
     word_w = _text_w(draw, WORDMARK, f["wordmark"])
     sq = px(10)            # the ■ accents flanking the tagline
     sq_gap = px(8)
     tag_core_w = _text_w(draw, TAGLINE, f["tag"], ls=px(5))
     tag_w = sq + sq_gap + tag_core_w + sq_gap + sq
     block_w = max(word_w, tag_w)
-    group_w = robot_w + px(12) + block_w
+    group_w = mascot_w + px(12) + block_w
     gx = CENTER - group_w / 2
-    _draw_robot(draw, gx, y, robot_h / 150.0)
-    tx = gx + robot_w + px(12)
+    if mascot is not None:
+        canvas.paste(mascot.convert("L"), (round(gx), round(y)))
+    else:
+        _draw_robot(draw, gx, y, mascot_h / 150.0)
+    tx = gx + mascot_w + px(12)
     draw.text((tx, y + px(2)), WORDMARK, font=f["wordmark"], fill=INK)
     word_h = _line_h(f["wordmark"], 0.85)
     tag_y = y + px(2) + word_h + px(4)
@@ -353,7 +373,7 @@ def build_receipt_image(photo_path, fortune):
     _orn_square(draw, tx + sq / 2, tag_cy, sq)
     sx = _draw_run(draw, tx + sq + sq_gap, tag_y, TAGLINE, f["tag"], ls=px(5))
     _orn_square(draw, sx + sq_gap - px(5) + sq / 2, tag_cy, sq)
-    y += robot_h + GAP
+    y += mascot_h + GAP
 
     # dash band
     y = _dash_band(draw, y) + GAP
@@ -402,6 +422,21 @@ def build_receipt_image(photo_path, fortune):
     # 4) FORTUNE BLOCK ------------------------------------------------------
     _draw_center(draw, y, "=== YOUR FORTUNE ===", f["fortune_head"], ls=px(3))
     y += _line_h(f["fortune_head"]) + px(8)
+
+    # icon row -- three random glyphs across the receipt, the visual fortune
+    # (optional: only if cairosvg is installed, else this block is skipped).
+    # Sized close to the header mascot so the row reads as the main event.
+    icon_size = px(66)
+    icons = [im for im in (_render_icon(p, icon_size) for p in _pick_icons(ICON_COUNT)) if im]
+    if icons:
+        gap = px(18)
+        total = sum(im.width for im in icons) + gap * (len(icons) - 1)
+        ix = CENTER - total / 2
+        for im in icons:
+            canvas.paste(im.convert("L"), (round(ix), y))
+            ix += im.width + gap
+        y += icon_size + px(12)
+
     for ln in _wrap(draw, fortune, f["fortune"], CONTENT_W - px(8)):
         _draw_center(draw, y, ln, f["fortune"])
         y += _line_h(f["fortune"], 1.25)
@@ -417,18 +452,6 @@ def build_receipt_image(photo_path, fortune):
     _orn_tri(draw, lx + lw + lgap + tri_s / 2, y + _line_h(f["lucky"]) * 0.5, tri_s)
     _draw_run(draw, lx + lw + lgap + tri_s + lgap, y, nums, f["lucky"], ls=px(3))
     y += _line_h(f["lucky"]) + px(12)
-
-    # icon row (optional)
-    icon_size = px(30)
-    icons = [im for im in (_render_icon(p, icon_size) for p in _pick_icons(ICON_COUNT)) if im]
-    if icons:
-        gap = px(12)
-        total = sum(im.width for im in icons) + gap * (len(icons) - 1)
-        ix = CENTER - total / 2
-        for im in icons:
-            canvas.paste(im.convert("L"), (round(ix), y))
-            ix += im.width + gap
-        y += icon_size + px(4)
 
     y += GAP
     # dash band
