@@ -9,6 +9,7 @@ import subprocess
 import random
 import os
 
+from log import log
 from config import (
     FORTUNE_FILE,
     FORTUNES_FALLBACK,
@@ -77,7 +78,7 @@ def setup_printer():
         # Just confirm `lp` exists so we fail loudly here, not mid-print.
         from shutil import which
         if which("lp") is None:
-            print("[printer] 'lp' not found (is CUPS installed?); using console")
+            log.warning("printer: 'lp' not found (is CUPS installed?); using console")
             return None
         return _CupsPrinter()
     try:
@@ -98,9 +99,9 @@ def setup_printer():
             )
         if PRINTER_BACKEND == "network":
             return escpos_printer.Network(PRINTER_NETWORK_HOST)
-        print(f"[printer] unknown backend {PRINTER_BACKEND!r}; using console")
+        log.warning("printer: unknown backend %r; using console", PRINTER_BACKEND)
     except Exception as exc:  # missing lib, wrong IDs, no permissions, etc.
-        print(f"[printer] init failed ({exc}); falling back to console")
+        log.error("printer: init failed (%s); falling back to console", exc)
     return None
 
 
@@ -211,8 +212,9 @@ def print_receipt(prn, photo_path, caption):
                 input=data,                # raw ESC/POS bytes on stdin
                 check=True,
             )
+            log.info("print: receipt sent (cups queue %s)", CUPS_PRINTER_NAME)
         except Exception as exc:
-            print(f"[printer] cups path failed ({exc}); dumping to console")
+            log.error("print: FAILED via cups (%s); dumping to console", exc)
             _console_receipt(photo_path, caption, fortune, emoji)
         return
 
@@ -221,8 +223,10 @@ def print_receipt(prn, photo_path, caption):
         return
     try:
         _render_receipt(prn, photo_path, caption, fortune, emoji)
+        log.info("print: receipt sent (backend %s)", PRINTER_BACKEND)
     except Exception as exc:
-        print(f"[printer] print failed ({exc}); dumping to console")
+        log.error("print: FAILED via %s (%s); dumping to console",
+                  PRINTER_BACKEND, exc)
         _console_receipt(photo_path, caption, fortune, emoji)
 
 
@@ -245,8 +249,9 @@ def _print_scuptee(prn, photo_path, fortune):
             out += _GS + b"V" + b"\x00"   # full cut
             subprocess.run(["lp", "-d", CUPS_PRINTER_NAME],
                            input=bytes(out), check=True)
+            log.info("print: receipt sent (cups queue %s)", CUPS_PRINTER_NAME)
         except Exception as exc:
-            print(f"[printer] cups path failed ({exc}); saving preview")
+            log.error("print: FAILED via cups (%s); saving preview", exc)
             _scuptee_console(img, photo_path)
         return
 
@@ -257,8 +262,10 @@ def _print_scuptee(prn, photo_path, fortune):
         prn.set(align="center")
         prn.image(img)
         prn.cut()
+        log.info("print: receipt sent (backend %s)", PRINTER_BACKEND)
     except Exception as exc:
-        print(f"[printer] print failed ({exc}); saving preview")
+        log.error("print: FAILED via %s (%s); saving preview",
+                  PRINTER_BACKEND, exc)
         _scuptee_console(img, photo_path)
 
 
