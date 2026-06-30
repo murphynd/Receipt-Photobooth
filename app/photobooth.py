@@ -25,7 +25,7 @@ from log import log
 from config import CAPTION, INPUT_MODE, COOLDOWN_AFTER_PRINT, PRINTER_BACKEND
 from audio import play_beckon, countdown
 from printing import setup_printer, print_receipt
-from hardware import pir, camera, wait_for_trigger, capture_photo
+from hardware import pir, camera, wait_for_trigger, capture_photo, flash_led
 
 
 # ----------------------------------------------------------------------------
@@ -33,7 +33,8 @@ from hardware import pir, camera, wait_for_trigger, capture_photo
 # ----------------------------------------------------------------------------
 # - DONE: randomized fortune from a text doc + randomized set of 3 emoji
 # - DONE: audio countdown / delay after the trigger before capture
-# - order pink or purple physical button (wired to GPIO 27, INPUT_MODE="button")
+# - order pink or purple physical button (wired to GPIO 23, LED on GPIO 24,
+#   INPUT_MODE="button"); LED flashes through the countdown
 # - order printer with paper + sort a power source
 # - write an artist statement
 # - sticker of the sculpture / dorky frame / speech bubble around the image
@@ -61,7 +62,7 @@ def main():
                     pir.wait_for_no_motion()
                     continue
 
-                countdown()
+                countdown(on_tick=flash_led)   # LED flashes once per count
                 photo_path = capture_photo()
                 # The photo is only needed to build the receipt; don't keep it
                 # around (storage fills fast). Delete it once the receipt is sent.

@@ -48,11 +48,18 @@ def play_beckon():
     _play_wav(BECKON_WAV)
 
 
-def countdown():
-    """Count down before the shutter, with an optional per-tick beep."""
+def countdown(on_tick=None):
+    """Count down before the shutter, with an optional per-tick beep.
+
+    ``on_tick`` is called once at the start of each second (e.g. to flash the
+    button LED in time with the count); it's kept out of audio.py so this module
+    stays free of the Pi-only hardware imports.
+    """
     for i in range(CAPTURE_COUNTDOWN, 0, -1):
         print(f"   {i}...")
         _play_wav(COUNTDOWN_WAV)
+        if on_tick is not None:
+            on_tick()
         time.sleep(1)
     if CAPTURE_COUNTDOWN > 0:
         print("   *click*")
