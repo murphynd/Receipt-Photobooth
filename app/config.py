@@ -7,7 +7,8 @@ so this is the one file to edit when adjusting behaviour on the Pi.
 import os
 
 PIR_PIN = 17
-BUTTON_PIN = 27          # only used when INPUT_MODE == "button"
+BUTTON_PIN = 23          # only used when INPUT_MODE == "button"
+LED_PIN = 24             # button's built-in LED; flashes during the countdown
 
 # How the photo gets triggered:
 #   "keyboard" -> press Enter in the terminal (great for testing)
@@ -30,6 +31,7 @@ ARM_TIMEOUT = 20.0       # seconds to wait for a press before giving up and re-i
 # Pre-capture countdown (gives people a beat to pose after they trigger)
 CAPTURE_COUNTDOWN = 3        # seconds to count down before the shutter (0 disables)
 COUNTDOWN_WAV = "beep.wav"   # optional per-tick sound; skipped silently if missing
+LED_FLASH_ON = 0.2           # how long the button LED stays lit per countdown tick (s)
 
 # Re-trigger pacing
 COOLDOWN_AFTER_PRINT = 3.0   # seconds to settle after a print
