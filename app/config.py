@@ -4,13 +4,18 @@ Every other module pulls its settings from here (``from config import *``),
 so this is the one file to edit when adjusting behaviour on the Pi.
 """
 
+import os
+
 PIR_PIN = 17
 BUTTON_PIN = 27          # only used when INPUT_MODE == "button"
 
 # How the photo gets triggered:
 #   "keyboard" -> press Enter in the terminal (great for testing)
 #   "button"   -> a physical GPIO button on BUTTON_PIN
-INPUT_MODE = "keyboard"
+# The systemd service sets PHOTOBOOTH_INPUT_MODE=button so it runs headless
+# (keyboard mode would call input() with no terminal and crash). Bench runs
+# with no env var set default to "keyboard".
+INPUT_MODE = os.environ.get("PHOTOBOOTH_INPUT_MODE", "keyboard")
 
 PHOTO_DIR = "photos"
 CAPTION = "Smile! You've been spotted."

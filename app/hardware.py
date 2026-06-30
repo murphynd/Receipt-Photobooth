@@ -10,6 +10,7 @@ from datetime import datetime
 import time
 import os
 
+from log import log
 from config import (
     PIR_PIN,
     BUTTON_PIN,
@@ -30,20 +31,35 @@ camera = Picamera2()
 camera.configure(camera.create_still_configuration())
 camera.start()
 time.sleep(2)  # camera warm-up
+log.info("camera: initialized (PIR on GPIO %d, trigger=%s)", PIR_PIN, INPUT_MODE)
 
 
 def wait_for_trigger():
     """Block until the user triggers a capture. Returns True if triggered."""
     if INPUT_MODE == "keyboard":
-        input("Press Enter to take a photo... ")
-        return True
+        # No stdin under systemd -> input() raises EOFError; treat as no-go
+        # rather than crashing (the service uses button mode regardless).
+        try:
+            input("Press Enter to take a photo... ")
+            return True
+        except EOFError:
+            log.warning("trigger: keyboard mode has no stdin; cannot arm")
+            return False
     # button mode
-    print(f"Waiting for button press (up to {ARM_TIMEOUT:.0f}s)...")
-    return button.wait_for_press(timeout=ARM_TIMEOUT)
+    log.info("armed: waiting for button press (up to %.0fs)", ARM_TIMEOUT)
+    pressed = button.wait_for_press(timeout=ARM_TIMEOUT)
+    if pressed:
+        log.info("trigger: button pressed")
+    return pressed
 
 
 def capture_photo():
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     path = os.path.join(PHOTO_DIR, f"photo_{ts}.jpg")
     camera.capture_file(path)
+    try:
+        kb = os.path.getsize(path) / 1024
+        log.info("capture: saved %s (%.0f KB)", os.path.basename(path), kb)
+    except OSError:
+        log.info("capture: saved %s", os.path.basename(path))
     return path

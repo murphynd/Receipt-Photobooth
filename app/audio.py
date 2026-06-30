@@ -4,6 +4,7 @@ from pathlib import Path
 import subprocess
 import time
 
+from log import log
 from config import (
     BECKON_WAV,
     BECKON_COOLDOWN,
@@ -28,7 +29,7 @@ def _play_wav(path, blocking=False):
             proc.wait()
         return proc
     except FileNotFoundError:
-        print("[audio] 'aplay' not found -- install alsa-utils or swap the player")
+        log.warning("audio: 'aplay' not found -- install alsa-utils or swap the player")
         return None
 
 
@@ -41,8 +42,9 @@ def play_beckon():
     _last_beckon = now
 
     if not Path(BECKON_WAV).exists():
-        print(f"[audio] beckon clip not found: {BECKON_WAV} (skipping)")
+        log.warning("audio: beckon clip not found: %s (skipping)", BECKON_WAV)
         return
+    log.info("beckon: playing clip")
     _play_wav(BECKON_WAV)
 
 

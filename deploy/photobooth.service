@@ -1,0 +1,41 @@
+[Unit]
+Description=Furby Receipt Photobooth
+Documentation=https://github.com/murphynd/receipt-photobooth
+# Wait for the local login session (camera/audio belong to the seat) and for
+# CUPS, since the active printer backend pipes ESC/POS bytes to `lp`.
+After=multi-user.target sound.target cups.service
+Wants=cups.service
+
+[Service]
+Type=simple
+User=kalekat
+Group=kalekat
+
+# Run from inside app/ so the mixed cwd-relative (magicsounds.wav, photos/,
+# fortunes.txt) and source-relative (fonts/, fortune_icons_svg/) asset paths
+# all resolve to the same dir -- exactly like `cd app && python3 photobooth.py`.
+WorkingDirectory=/home/kalekat/Desktop/receipt-photobooth/app
+ExecStart=/usr/bin/python3 photobooth.py
+
+# Force headless trigger mode: keyboard mode calls input() with no terminal
+# under systemd and would crash on the first visitor.
+Environment=PHOTOBOOTH_INPUT_MODE=button
+Environment=PHOTOBOOTH_LOG_LEVEL=INFO
+# Unbuffered so each event line reaches the journal immediately (no log lag).
+Environment=PYTHONUNBUFFERED=1
+# aplay/PipeWire on Bookworm reach the user's audio session through this.
+# Confirm the uid with `id -u kalekat` (first Pi user is normally 1000).
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+
+# Auto-restart on crash; throttle so a hard failure doesn't hot-loop.
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=photobooth
+
+[Install]
+WantedBy=multi-user.target

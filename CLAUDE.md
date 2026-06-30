@@ -136,6 +136,23 @@ real receipts under booth lighting — faces tend to print muddy, hence
   `pip3 install python-escpos --break-system-packages` and
   `sudo apt install libusb-1.0-0 alsa-utils`.
 
+## Running as a gallery service
+
+For unattended gallery runs the app installs as a **systemd service** (auto-start
+on boot, auto-restart on crash, logs to the journal). The unit + full runbook
+(install, SSH, Tailscale, static IP, dry run, troubleshooting) live in `deploy/`:
+`deploy/photobooth.service` and `deploy/DEPLOY.md`.
+
+Key points:
+- The service sets `PHOTOBOOTH_INPUT_MODE=button` (env override read in
+  `config.py`). Keyboard mode calls `input()`, which has no stdin under systemd
+  and would crash — so headless runs must use button mode. Bench runs with no
+  env var still default to keyboard.
+- Logging goes through `app/log.py` (Python `logging` -> stdout -> journald).
+  One clean line per event: `journalctl -u photobooth -f` tells the whole story
+  (PIR -> beckon -> trigger -> capture -> print -> cooldown). Tune verbosity with
+  `PHOTOBOOTH_LOG_LEVEL`.
+
 ## Open TODOs (from script notes)
 
 - Randomized fortune from a text doc + randomized set of 3 emoji on the receipt

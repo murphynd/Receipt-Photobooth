@@ -21,6 +21,7 @@ This file is just the state-machine loop. The pieces live in:
 import os
 import time
 
+from log import log
 from config import CAPTION, INPUT_MODE, COOLDOWN_AFTER_PRINT, PRINTER_BACKEND
 from audio import play_beckon, countdown
 from printing import setup_printer, print_receipt
@@ -44,38 +45,46 @@ from hardware import pir, camera, wait_for_trigger, capture_photo
 def main():
     prn = setup_printer()
     where = "console" if prn is None else PRINTER_BACKEND
-    print(
-        f"Photobooth ready (trigger: {INPUT_MODE}, printer: {where}). "
-        "Waiting for motion... (Ctrl+C to quit)"
-    )
+    log.info("photobooth ready (trigger=%s, printer=%s); waiting for motion",
+             INPUT_MODE, where)
     try:
         while True:
-            pir.wait_for_motion()
-            print("\n>>> Someone is there! <<<")
-            play_beckon()
-
-            if not wait_for_trigger():
-                print("No trigger -- standing down.")
-                pir.wait_for_no_motion()
-                continue
-
-            countdown()
-            photo_path = capture_photo()
-            # The photo is only needed to build the receipt; don't keep it
-            # around (storage fills fast). Delete it once the receipt is sent.
+            # Guard each cycle so one bad capture/print logs and re-arms
+            # instead of crashing the whole service (gallery runs unattended).
             try:
-                print_receipt(prn, photo_path, CAPTION)
-            finally:
-                try:
-                    os.remove(photo_path)
-                except OSError:
-                    pass
-            time.sleep(COOLDOWN_AFTER_PRINT)
+                pir.wait_for_motion()
+                log.info("PIR: motion detected")
+                play_beckon()
 
-            pir.wait_for_no_motion()
-            print("Waiting for motion...")
+                if not wait_for_trigger():
+                    log.info("trigger: none within timeout; standing down")
+                    pir.wait_for_no_motion()
+                    continue
+
+                countdown()
+                photo_path = capture_photo()
+                # The photo is only needed to build the receipt; don't keep it
+                # around (storage fills fast). Delete it once the receipt is sent.
+                try:
+                    print_receipt(prn, photo_path, CAPTION)
+                finally:
+                    try:
+                        os.remove(photo_path)
+                    except OSError:
+                        pass
+
+                log.info("cooldown: %.1fs; waiting for area to clear",
+                         COOLDOWN_AFTER_PRINT)
+                time.sleep(COOLDOWN_AFTER_PRINT)
+                pir.wait_for_no_motion()
+                log.info("re-armed; waiting for motion")
+            except KeyboardInterrupt:
+                raise
+            except Exception:
+                log.exception("cycle error; recovering and re-arming")
+                time.sleep(2)
     except KeyboardInterrupt:
-        print("\nShutting down.")
+        log.info("shutting down (keyboard interrupt)")
     finally:
         camera.stop()
         if prn is not None:
