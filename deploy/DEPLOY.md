@@ -32,6 +32,35 @@ id -nG kalekat                     # must include: gpio video audio plugdev lp
   stack on both; just make sure the camera works by hand first (`libcamera-hello`
   on Bookworm / `libcamera-still` on Bullseye).
 
+### Install the software (system libs + Python deps)
+
+Do this once on a fresh Pi, before the by-hand run below.
+
+```bash
+# System libraries the Python packages bind to:
+#   libusb-1.0-0  -> python-escpos USB backend
+#   alsa-utils    -> aplay, for the beckon/countdown audio
+#   libcairo2     -> cairosvg, renders the SVG mascot + fortune icons
+#   libffi-dev    -> build dep if pip has to compile cairocffi
+sudo apt update
+sudo apt install -y libusb-1.0-0 alsa-utils libcairo2 libffi-dev
+
+# Camera + GPIO come from apt on Raspberry Pi OS (prefer these over pip):
+sudo apt install -y python3-picamera2 python3-gpiozero
+
+# The rest from pip. --break-system-packages is required on Bookworm's
+# externally-managed Python. Run from the app/ folder so requirements.txt resolves:
+cd ~/Desktop/receipt-photobooth/app
+pip3 install -r requirements.txt --break-system-packages
+```
+
+Confirm the optional libraries that silently degrade the receipt if missing —
+without these the QR block and SVG icon rows are skipped (the rest still prints):
+
+```bash
+python3 -c "import escpos, PIL, numpy, qrcode, cairosvg; print('receipt deps OK')"
+```
+
 Quick sanity check that it runs by hand in service (button) mode before installing:
 
 ```bash

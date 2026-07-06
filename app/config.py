@@ -19,7 +19,7 @@ LED_PIN = 24             # button's built-in LED; flashes during the countdown
 INPUT_MODE = os.environ.get("PHOTOBOOTH_INPUT_MODE", "keyboard")
 
 PHOTO_DIR = "photos"
-CAPTION = "Smile! You've been spotted."
+CAPTION = "Hey Cutie :)"
 
 # Audio beckon
 BECKON_WAV = "magicsounds.wav"   # a short "come on over!" clip

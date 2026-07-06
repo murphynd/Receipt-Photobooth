@@ -39,14 +39,3 @@ The phrase "Tomorrow Friends" now does double work — it's a company that sold 
 And it suggests a possible hidden spine for the receipt or flyer: the _nostos / algos_ split. A warm fortune on the front of the receipt, and somewhere — a footer, a fine-print line, a "diagnosis code" styled like a real receipt's barcode area — the original meaning leaks through. _home-woe._ A receipt always has that clinical garbage at the bottom (transaction codes, store numbers). You could bury the disease there.
 
 Want to work on the artist statement next, now that we have its backbone — or develop the front-facing flyer/receipt language first and let the statement stay in your pocket?
-
-
-python3 -c "
-from gpiozero import Button
-b = Button(23, pull_up=True)
-print('Resting is_pressed =', b.is_pressed, '(should be False when untouched)')
-b.when_pressed  = lambda: print('PRESSED')
-b.when_released = lambda: print('released')
-print('Now press the button...')
-from signal import pause; pause()
-"
