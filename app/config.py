@@ -21,16 +21,26 @@ INPUT_MODE = os.environ.get("PHOTOBOOTH_INPUT_MODE", "keyboard")
 PHOTO_DIR = "photos"
 CAPTION = "Hey Cutie :)"
 
-# Audio beckon
-BECKON_WAV = "magicsounds.wav"   # a short "come on over!" clip
-BECKON_COOLDOWN = 15.0             # seconds before we'll beckon the same person again
+# Audio (the kiz voice clips; paths are cwd-relative, so run from inside app/)
+INTRO_WAV = "kiz/intro.wav"          # greeting when the PIR first sees someone
+BECKON_WAVS = [                      # one is picked at random after the intro
+    "kiz/beckon.wav",
+    "kiz/beckon2.wav",
+]
+SMILE_WAV = "kiz/givemesmile.wav"    # plays right after the button press
+BYE_WAVS = [                         # one is picked at random after the shutter
+    "kiz/bye.wav",
+    "kiz/bye2.wav",
+]
+BECKON_COOLDOWN = 15.0   # seconds before we'll greet/beckon the same person again
 
 # Button arming (button mode only)
 ARM_TIMEOUT = 20.0       # seconds to wait for a press before giving up and re-idling
 
 # Pre-capture countdown (gives people a beat to pose after they trigger)
-CAPTURE_COUNTDOWN = 3        # seconds to count down before the shutter (0 disables)
-COUNTDOWN_WAV = "beep.wav"   # optional per-tick sound; skipped silently if missing
+CAPTURE_COUNTDOWN = 4        # seconds to count down before the shutter (0 disables)
+COUNTDOWN_WAV = "kiz/4seccountdown.wav"  # voice clip covering the whole countdown
+PAUSE_BEFORE_BYE = 1.0       # beat between the shutter and the bye clip (s)
 LED_FLASH_ON = 0.2           # how long the button LED stays lit per countdown tick (s)
 
 # Re-trigger pacing

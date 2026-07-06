@@ -3,7 +3,7 @@
 
 Flow:
     IDLE      wait for the PIR to see someone
-    BECKON    play an audio clip inviting them over (rate-limited)
+    BECKON    play the intro greeting + a random beckon clip (rate-limited)
     ARMED     wait for the trigger (keyboard Enter for testing, or a GPIO button)
     COUNTDOWN audible/visible countdown so people can pose
     CAPTURE   take the photo
@@ -22,8 +22,14 @@ import os
 import time
 
 from log import log
-from config import CAPTION, INPUT_MODE, COOLDOWN_AFTER_PRINT, PRINTER_BACKEND
-from audio import play_beckon, countdown
+from config import (
+    CAPTION,
+    INPUT_MODE,
+    COOLDOWN_AFTER_PRINT,
+    PAUSE_BEFORE_BYE,
+    PRINTER_BACKEND,
+)
+from audio import play_greeting, play_smile, play_bye, countdown
 from printing import setup_printer, print_receipt
 from hardware import pir, camera, wait_for_trigger, capture_photo, flash_led
 
@@ -55,15 +61,18 @@ def main():
             try:
                 pir.wait_for_motion()
                 log.info("PIR: motion detected")
-                play_beckon()
+                play_greeting()                # intro, then a random beckon
 
                 if not wait_for_trigger():
                     log.info("trigger: none within timeout; standing down")
                     pir.wait_for_no_motion()
                     continue
 
-                countdown(on_tick=flash_led)   # LED flashes once per count
+                play_smile()                   # "give me a smile" (blocks)
+                countdown(on_tick=flash_led)   # 4s voice clip; LED flashes per count
                 photo_path = capture_photo()
+                time.sleep(PAUSE_BEFORE_BYE)
+                play_bye()                     # random bye/bye2 while the receipt prints
                 # The photo is only needed to build the receipt; don't keep it
                 # around (storage fills fast). Delete it once the receipt is sent.
                 try:

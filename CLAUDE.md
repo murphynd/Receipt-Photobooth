@@ -23,15 +23,15 @@ copy to the device. Everything else is supporting material that never ships.
 ```
 app/    <- runtime: copy ONLY this to the Pi, run from inside it
   photobooth.py config.py audio.py hardware.py imaging.py printing.py receipt.py
-  requirements.txt fortunes.txt magicsounds.wav
-  fonts/  fortune_icons_svg/
+  requirements.txt fortunes.txt
+  fonts/  fortune_icons_svg/  kiz/
 docs/   <- design handoff, contact sheet, HTML preview (not needed to run)
 README.md  CLAUDE.md  LICENSE   <- repo meta
 ```
 
 Run from inside `app/` so relative asset paths resolve:
 `cd app && python3 photobooth.py`. Some paths are resolved against the current
-working directory (`magicsounds.wav`, `photos/`, `fortunes.txt`) and some against
+working directory (`kiz/*.wav`, `photos/`, `fortunes.txt`) and some against
 the source dir (`fonts/`, `fortune_icons_svg/`); running from `app/` makes both
 the same directory, so everything just works.
 

@@ -11,7 +11,7 @@ Type=simple
 User=kalekat
 Group=kalekat
 
-# Run from inside app/ so the mixed cwd-relative (magicsounds.wav, photos/,
+# Run from inside app/ so the mixed cwd-relative (kiz/*.wav, photos/,
 # fortunes.txt) and source-relative (fonts/, fortune_icons_svg/) asset paths
 # all resolve to the same dir -- exactly like `cd app && python3 photobooth.py`.
 WorkingDirectory=/home/kalekat/Desktop/receipt-photobooth/app
