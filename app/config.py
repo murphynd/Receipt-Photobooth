@@ -89,8 +89,8 @@ EMOJI_COUNT = 3          # how many random emoji to print across the receipt (cl
 # ----------------------------------------------------------------------------
 # Receipt design / layout
 # ----------------------------------------------------------------------------
-#   "scuptee" -> the full "Scuptee Arcade Pixel" graphic receipt (logo, framed
-#                photo, fortune block, itemized list, QR code, footer). The whole
+#   "scuptee" -> the full "Scuptee Arcade Pixel" graphic receipt (header lockup,
+#                framed photo, fortune block, QR code, footer). The whole
 #                receipt is drawn as one 576px-wide bitmap and sent to the printer.
 #   "classic" -> the original simple text receipt (photo + caption + fortune).
 RECEIPT_STYLE = "scuptee"
@@ -103,8 +103,7 @@ FONT_VT323 = "VT323-Regular.ttf"     # body text (pixel/terminal look)
 FONT_BUNGEE = "Bungee-Regular.ttf"   # the big "SCUPTEE" wordmark
 
 # Branding / copy for the scuptee receipt.
-WORDMARK = "SCUPTEE"
-TAGLINE = "INSERT MEMORY"
+WORDMARK = "JEANIE N ME"   # text fallback if the wordmark SVG can't render
 ARTIST_HANDLE = "@bangbangcrafts"          # shown under the QR (the artist)
 QR_URL = "https://instagram.com/bangbangcrafts"   # what the QR actually encodes
 
@@ -117,10 +116,14 @@ LUCKY_MAX = 49           # numbers are 01..LUCKY_MAX, zero-padded to 2 digits
 ICON_DIR = "fortune_icons_svg/fortune_icons"
 ICON_COUNT = 3           # how many random icons to print across the receipt
 
-# The header lockup draws a *random* SVG glyph from ICON_DIR beside the
-# wordmark (needs "cairosvg"). HEADER_ICON is just the fallback used if the
-# random pick fails; if cairosvg is missing the header uses the drawn robot.
-HEADER_ICON = "clown_cat.svg"
+# Header lockup artwork (needs "cairosvg" to print; without it the header
+# falls back to the WORDMARK text). The "▸" separators in the tagline are
+# drawn as little triangles (VT323 has no glyph for them).
+HEADER_ICON_DIR = "fortune_icons_svg/header_icons"
+HEADER_WORDMARK_SVG = "jeanie_n_me_cropped.svg"       # the big script wordmark
+HEADER_MASCOT_SVG = "photo_pals_mascot_cropped.svg"   # tilted mascot by the tagline
+HEADER_TITLE = "TOMORROW FRIENDS"
+HEADER_TAGLINE = "say cheese ▸ tell me your secrets ▸ let's be friends!"
 
 # Console preview
 RECEIPT_COLS = 42        # character width of the ASCII receipt preview

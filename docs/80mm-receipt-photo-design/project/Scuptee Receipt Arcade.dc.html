@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=VT323&amp;display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;padding:0;}
+  *{box-sizing:border-box;}
+  image-slot{display:block;width:100%;height:100%;}
+</style>
+<script src="image-slot.js"></script>
+</helmet>
+
+<div style="min-height: 100vh; box-sizing: border-box; padding: 56px 24px; background: #e4e1d8; display: flex; justify-content: center; align-items: flex-start; font-family: 'VT323',monospace; position: absolute; left: 11px; top: -100px">
+
+  
+
+<div style="position: relative; width: 360px; background: #f7f5ee; color: #221f1a; padding: 26px 26px 30px; filter: drop-shadow(0 12px 22px rgba(60,55,40,.24))" style-before="content:'';position:absolute;left:0;right:0;top:-8px;height:8px;background:url('data:image/svg+xml;utf8,&lt;svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%228%22&gt;&lt;path d=%22M0 8L8 0L16 8Z%22 fill=%22%23f7f5ee%22/&gt;&lt;/svg&gt;') repeat-x;background-size:16px 8px;" style-after="content:'';position:absolute;left:0;right:0;bottom:-8px;height:8px;background:url('data:image/svg+xml;utf8,&lt;svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%228%22&gt;&lt;path d=%22M0 0L8 8L16 0Z%22 fill=%22%23f7f5ee%22/&gt;&lt;/svg&gt;') repeat-x;background-size:16px 8px;">
+
+    <!-- HEADER — Jeanie n Me wordmark -->
+    <div style="display: flex; justify-content: center; padding: 4px 0 2px; padding-top: 10px; margin-top: 20px">
+      <div style="font:400 22px/1.1 'VT323',monospace;letter-spacing:2px;">TOMORROW FRIENDS</div>
+    </div>
+
+    <img src="uploads/jeanie_n_me_cropped.svg" alt="Jeanie n Me" style="width: 279px; height: 71px; display: block; position: static; padding-left: 2px; padding-right: 2px; margin-left: 15px; margin-right: 15px"><div style="display:flex;align-items:center;justify-content:center;gap:14px;padding:2px 6px;">
+      
+      <img src="uploads/photo_pals_mascot_cropped.svg" alt="Photo Pals mascot" style="width:104px;height:auto;display:block;transform:rotate(-5deg);flex:none;"><div style="font:400 17px 'VT323',monospace;letter-spacing:1px;color:#5c574d;margin-top:6px;">say cheese ▸ tell me your secrets ▸ let's be friends!</div><div style="text-align:left;">
+        
+        
+        
+      </div>
+    </div>
+
+    <!-- PHOTO w/ crop marks -->
+    <div style="height:7px;margin:16px 0;background:url('squiggle.svg') repeat-x;background-size:26px 7px;"></div><div style="position:relative;padding:14px;">
+      <div style="position:absolute;top:0;left:0;width:16px;height:16px;border-top:2px solid #221f1a;border-left:2px solid #221f1a;"></div>
+      <div style="position:absolute;top:0;right:0;width:16px;height:16px;border-top:2px solid #221f1a;border-right:2px solid #221f1a;"></div>
+      <div style="position:absolute;bottom:0;left:0;width:16px;height:16px;border-bottom:2px solid #221f1a;border-left:2px solid #221f1a;"></div>
+      <div style="position:absolute;bottom:0;right:0;width:16px;height:16px;border-bottom:2px solid #221f1a;border-right:2px solid #221f1a;"></div>
+      <div style="position:relative;width:100%;aspect-ratio:4/5;overflow:hidden;background:#e9e6dc;filter:grayscale(1) contrast(1.14) brightness(1.02);">
+        <image-slot id="scuptee-photo-b" shape="rect" placeholder="PRESS ● TO CAPTURE"></image-slot>
+        <div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(#000 30%,transparent 32%);background-size:3px 3px;mix-blend-mode:multiply;opacity:.16;"></div>
+        <div style="position:absolute;top:8px;left:8px;display:flex;align-items:center;gap:5px;font:400 16px 'VT323',monospace;letter-spacing:1px;color:#fff;mix-blend-mode:difference;"><span style="width:7px;height:7px;border-radius:50%;background:#fff;display:inline-block;"></span>REC</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;font:400 18px 'VT323',monospace;letter-spacing:2px;margin-top:6px;">● {{ stampB }}</div>
+
+    
+
+    <!-- FORTUNE -->
+    <div style="text-align:center;font:400 22px 'VT323',monospace;letter-spacing:3px;">=== YOUR FORTUNE ===</div>
+    <div style="display:flex;justify-content:center;gap:12px;font-size:22px;margin-top:12px;filter:grayscale(1) contrast(1.05);">
+      <span>🌈</span><span>🪀</span><span>🎮</span><span>💾</span><span>🛼</span>
+    </div><div style="text-align:center;font:400 21px/1.25 'VT323',monospace;margin:10px 4px 14px;text-wrap:pretty;">Your inner kid just called — it says more bubblegum, less worrying. Stay totally fresh.</div>
+    <div style="text-align:center;font:400 20px 'VT323',monospace;letter-spacing:3px;">LUCKY ▸ 03 11 19 27 44</div>
+    
+
+    
+
+    <!-- MASCOT — photo pal -->
+    
+
+    <div style="height:7px;margin:16px 0;background:url('squiggle.svg') repeat-x;background-size:26px 7px;"></div>
+
+    <!-- QR -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <div style="width:116px;height:116px;">{{ qrB }}</div>
+      <div style="font:400 19px 'VT323',monospace;letter-spacing:2px;">▓ FOLLOW THE ARTIST ▓</div>
+      <div style="font:400 24px 'VT323',monospace;letter-spacing:1px;"><br></div>
+    </div>
+
+    <div style="height:7px;margin:16px 0 12px;background:url('squiggle.svg') repeat-x;background-size:26px 7px;"></div>
+
+    <div style="text-align:center;font:400 22px 'VT323',monospace;letter-spacing:3px;">PLAYER 1 — KEEP THIS COPY</div>
+    <div style="text-align:center;font:400 18px 'VT323',monospace;letter-spacing:1px;color:#5c574d;margin-top:4px;">▶ PRESS THE BUTTON TO PLAY AGAIN</div>
+
+  </div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  makeQR(seed) {
+    const N = 25, m = 5;
+    let s = (seed || 73331) >>> 0;
+    const rnd = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+    const grid = Array.from({ length: N }, () => Array(N).fill(0));
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) grid[r][c] = rnd() > 0.52 ? 1 : 0;
+    const finder = (R, C) => {
+      for (let i = -1; i <= 7; i++) for (let j = -1; j <= 7; j++) {
+        const rr = R + i, cc = C + j;
+        if (rr < 0 || cc < 0 || rr >= N || cc >= N) continue;
+        const border = ((i === 0 || i === 6) && j >= 0 && j <= 6) || ((j === 0 || j === 6) && i >= 0 && i <= 6);
+        const inner = i >= 2 && i <= 4 && j >= 2 && j <= 4;
+        grid[rr][cc] = (border || inner) ? 1 : 0;
+      }
+    };
+    finder(0, 0); finder(0, N - 7); finder(N - 7, 0);
+    const rects = [];
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      if (grid[r][c]) rects.push(React.createElement('rect', { key: r + '_' + c, x: c * m, y: r * m, width: m, height: m, fill: '#221f1a' }));
+    }
+    return React.createElement('svg', { viewBox: '0 0 ' + (N * m) + ' ' + (N * m), width: '100%', height: '100%', shapeRendering: 'crispEdges' }, rects);
+  }
+  renderVals() {
+    const now = new Date();
+    const p2 = n => String(n).padStart(2, '0');
+    const stampB = p2(now.getMonth() + 1) + '/' + p2(now.getDate()) + '/' + String(now.getFullYear()).slice(2) + '  ' + p2(now.getHours()) + ':' + p2(now.getMinutes());
+    return { stampB, qrB: this.makeQR(91207) };
+  }
+}
+</script>
+</body>
+</html>

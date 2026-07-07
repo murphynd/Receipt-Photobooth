@@ -1,9 +1,9 @@
 """Scuptee "Arcade Pixel" receipt -- drawn as one tall 1-bit bitmap.
 
-The whole receipt (logo, framed photo, fortune block, itemized list, QR code,
+The whole receipt (header lockup, framed photo, fortune block, QR code,
 footer) is composed into a single 576px-wide image so it can be sent to the
-thermal printer the same way a photo is. See design_handoff_scuptee_receipt/
-for the reference design this recreates.
+thermal printer the same way a photo is. See docs/80mm-receipt-photo-design/
+for the reference design this recreates ("Scuptee Receipt Arcade").
 
 Entry point: build_receipt_image(photo_path, fortune) -> 1-bit PIL Image.
 
@@ -22,14 +22,17 @@ from config import (
     FONT_VT323,
     FONT_BUNGEE,
     WORDMARK,
-    TAGLINE,
     ARTIST_HANDLE,
     QR_URL,
     LUCKY_COUNT,
     LUCKY_MAX,
     ICON_DIR,
     ICON_COUNT,
-    HEADER_ICON,
+    HEADER_ICON_DIR,
+    HEADER_WORDMARK_SVG,
+    HEADER_MASCOT_SVG,
+    HEADER_TITLE,
+    HEADER_TAGLINE,
 )
 from imaging import prep_photo
 
@@ -78,14 +81,13 @@ def _font(filename, proto_size):
 def _fonts():
     """All the fonts the receipt needs, keyed by role (prototype px sizes)."""
     return {
-        "wordmark": _font(FONT_BUNGEE, 38),
-        "tag": _font(FONT_VT323, 18),
+        "title": _font(FONT_VT323, 22),      # "TOMORROW FRIENDS" over the wordmark
+        "wordmark": _font(FONT_BUNGEE, 30),  # text fallback if the wordmark SVG fails
+        "tag": _font(FONT_VT323, 17),        # the "say cheese ..." tagline
         "stamp": _font(FONT_VT323, 18),
         "fortune_head": _font(FONT_VT323, 22),
         "fortune": _font(FONT_VT323, 21),
         "lucky": _font(FONT_VT323, 20),
-        "item": _font(FONT_VT323, 19),
-        "total": _font(FONT_VT323, 23),
         "qr_cap": _font(FONT_VT323, 19),
         "handle": _font(FONT_VT323, 24),
         "footer": _font(FONT_VT323, 22),
@@ -136,19 +138,46 @@ def _wrap(draw, text, font, max_w, ls=0):
     return lines or [""]
 
 
+def _wrap_tokens(draw, text, font, max_w, tri_w, ls=0):
+    """Word-wrap for the header tagline, where a standalone "▸" renders as a
+    drawn triangle (VT323 lacks the glyph). Returns a list of
+    (tokens, line_width) tuples; each token is (word, width)."""
+    space_w = draw.textlength(" ", font=font) + ls
+    lines, cur, cur_w = [], [], 0
+    for tok in text.split():
+        w = tri_w if tok == "▸" else _text_w(draw, tok, font, ls)
+        add = w if not cur else w + space_w
+        if cur and cur_w + add > max_w:
+            lines.append((cur, cur_w))
+            cur, cur_w, add = [], 0, w
+        cur.append((tok, w))
+        cur_w += add
+    if cur:
+        lines.append((cur, cur_w))
+    return lines
+
+
 # ----------------------------------------------------------------------------
 # Decorative pieces
 # ----------------------------------------------------------------------------
-def _dash_band(draw, y, thick_proto=6, ink_proto=8, gap_proto=6):
-    """A repeating dash divider; returns the y just below it."""
-    thick = max(2, px(thick_proto))
-    ink = max(2, px(ink_proto))
-    gap = max(1, px(gap_proto))
-    cx = LEFT
-    while cx < RIGHT:
-        draw.rectangle([cx, y, min(cx + ink, RIGHT), y + thick - 1], fill=INK)
-        cx += ink + gap
-    return y + thick
+def _squiggle_band(draw, y):
+    """The design's wavy divider (squiggle.svg): an S-curve repeating every
+    26 prototype px inside a 7px-tall band. Returns the y just below it."""
+    h = px(7)
+    half = px(13)                       # half a wave period
+    stroke = max(2, round(1.4 * SCALE))
+    mid = y + h / 2
+    amp = h * 3.0 / 7.0                 # control-point offset from the midline
+    pts = []
+    x, up = LEFT, True
+    while x < RIGHT:
+        ctrl_y = mid - amp if up else mid + amp
+        seg = _quad((x, mid), (x + half / 2, ctrl_y), (x + half, mid), n=8)
+        pts.extend(p for p in seg if p[0] <= RIGHT)
+        up = not up
+        x += half
+    draw.line(pts, fill=INK, width=stroke, joint="curve")
+    return y + h
 
 
 def _crop_marks(draw, x0, y0, x1, y1):
@@ -167,10 +196,6 @@ def _crop_marks(draw, x0, y0, x1, y1):
 
 
 # --- small ornaments (the design's geometric accents; VT323 lacks the glyphs) ---
-def _orn_square(draw, cx, cy, s, fill=INK):
-    draw.rectangle([cx - s / 2, cy - s / 2, cx + s / 2, cy + s / 2], fill=fill)
-
-
 def _orn_circle(draw, cx, cy, r, fill=INK):
     draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=fill)
 
@@ -203,60 +228,6 @@ def _quad(p0, p1, p2, n=24):
         y = u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1]
         pts.append((x, y))
     return pts
-
-
-def _draw_robot(draw, ox, oy, scale):
-    """Draw the line-art robot mascot from the design's SVG primitives.
-
-    Coordinates are the SVG's (viewBox 0 0 120 150); scale + offset map them
-    onto the receipt. Drawn directly with PIL so no SVG renderer is required.
-    """
-    def P(x, y):
-        return (ox + x * scale, oy + y * scale)
-
-    w = max(2, round(4 * scale))   # SVG stroke-width 4
-    def line(a, b):
-        draw.line([P(*a), P(*b)], fill=INK, width=w, joint="curve")
-    def dot(cx, cy, r):
-        rr = r * scale
-        c = P(cx, cy)
-        draw.ellipse([c[0] - rr, c[1] - rr, c[0] + rr, c[1] + rr], fill=INK)
-    def ring(cx, cy, r):
-        rr = r * scale
-        c = P(cx, cy)
-        draw.ellipse([c[0] - rr, c[1] - rr, c[0] + rr, c[1] + rr],
-                     outline=INK, width=w)
-    def rrect(x, y, ww, hh, rad):
-        box = [P(x, y), P(x + ww, y + hh)]
-        # rounded_rectangle was added in Pillow 8.2; fall back to a plain
-        # rectangle on older builds so the robot still draws instead of crashing.
-        if hasattr(draw, "rounded_rectangle"):
-            draw.rounded_rectangle(box, radius=rad * scale, outline=INK, width=w)
-        else:
-            draw.rectangle(box, outline=INK, width=w)
-    def curve(pts):
-        draw.line([P(x, y) for (x, y) in pts], fill=INK, width=w, joint="curve")
-
-    line((60, 20), (60, 34))                 # antenna
-    dot(60, 14, 5)                            # antenna tip
-    rrect(27, 34, 66, 50, 15)                 # head
-    dot(48, 55, 4.5); dot(72, 55, 4.5)        # eyes
-    curve(_quad((46, 67), (60, 77), (74, 67)))   # smile
-    rrect(34, 90, 52, 40, 11)                 # body
-    # heart on the chest (simple filled heart approximating the SVG path)
-    hx, hy, hs = 60, 104, 11
-    lobe = hs * 0.5 * scale
-    cL = P(hx - hs * 0.45, hy - hs * 0.25)
-    cR = P(hx + hs * 0.45, hy - hs * 0.25)
-    draw.ellipse([cL[0] - lobe, cL[1] - lobe, cL[0] + lobe, cL[1] + lobe], fill=INK)
-    draw.ellipse([cR[0] - lobe, cR[1] - lobe, cR[0] + lobe, cR[1] + lobe], fill=INK)
-    draw.polygon([P(hx - hs * 0.78, hy - hs * 0.1),
-                  P(hx + hs * 0.78, hy - hs * 0.1),
-                  P(hx, hy + hs * 0.85)], fill=INK)
-    curve(_quad((34, 99), (21, 103), (19, 116)))   # left arm
-    curve(_quad((86, 99), (99, 103), (101, 116)))  # right arm
-    line((48, 130), (48, 142)); line((72, 130), (72, 142))  # legs
-    line((41, 143), (55, 143)); line((65, 143), (79, 143))  # feet
 
 
 # ----------------------------------------------------------------------------
@@ -318,14 +289,24 @@ def _pick_icons(n):
     return random.sample(files, min(n, len(files)))
 
 
-def _header_icon(size):
-    """The mascot for the header lockup: a random SVG glyph rasterized to
-    ``size`` px. Falls back to the configured HEADER_ICON if the pick fails,
-    and returns None when cairosvg / the files are unavailable (the caller then
-    falls back to the hand-drawn robot)."""
-    picks = _pick_icons(1)
-    path = picks[0] if picks else os.path.join(_HERE, ICON_DIR, HEADER_ICON)
-    return _render_icon(path, size)
+def _render_svg(path, width):
+    """Rasterize an SVG to a 1-bit PIL image ``width`` px wide, keeping its
+    aspect ratio (for the header wordmark / mascot art). Returns None when
+    cairosvg is unavailable or the file can't be rendered."""
+    try:
+        import cairosvg
+    except Exception:
+        return None
+    from PIL import Image
+    import io
+
+    try:
+        png = cairosvg.svg2png(url=path, output_width=width,
+                               background_color="white")
+        img = Image.open(io.BytesIO(png)).convert("L")
+        return img.point(lambda p: INK if p < 128 else PAPER)
+    except Exception:
+        return None
 
 
 # ----------------------------------------------------------------------------
@@ -349,34 +330,58 @@ def build_receipt_image(photo_path, fortune):
     draw = ImageDraw.Draw(canvas)
     y = PAD
 
-    # 1) HEADER LOCKUP -- mascot + wordmark, centered as a group -------------
-    mascot_h = px(74)
-    mascot = _header_icon(mascot_h)               # clown-cat SVG (None -> robot)
-    mascot_w = mascot.width if mascot is not None else px(58)
-    word_w = _text_w(draw, WORDMARK, f["wordmark"])
-    sq = px(10)            # the ■ accents flanking the tagline
-    sq_gap = px(8)
-    tag_core_w = _text_w(draw, TAGLINE, f["tag"], ls=px(5))
-    tag_w = sq + sq_gap + tag_core_w + sq_gap + sq
-    block_w = max(word_w, tag_w)
-    group_w = mascot_w + px(12) + block_w
-    gx = CENTER - group_w / 2
-    if mascot is not None:
-        canvas.paste(mascot.convert("L"), (round(gx), round(y)))
-    else:
-        _draw_robot(draw, gx, y, mascot_h / 150.0)
-    tx = gx + mascot_w + px(12)
-    draw.text((tx, y + px(2)), WORDMARK, font=f["wordmark"], fill=INK)
-    word_h = _line_h(f["wordmark"], 0.85)
-    tag_y = y + px(2) + word_h + px(4)
-    tag_cy = tag_y + _line_h(f["tag"]) * 0.5
-    _orn_square(draw, tx + sq / 2, tag_cy, sq)
-    sx = _draw_run(draw, tx + sq + sq_gap, tag_y, TAGLINE, f["tag"], ls=px(5))
-    _orn_square(draw, sx + sq_gap - px(5) + sq / 2, tag_cy, sq)
-    y += mascot_h + GAP
+    # 1) HEADER -- title, "Jeanie n Me" wordmark art, mascot + tagline -------
+    _draw_center(draw, y, HEADER_TITLE, f["title"], ls=px(2))
+    y += _line_h(f["title"]) + px(4)
 
-    # dash band
-    y = _dash_band(draw, y) + GAP
+    hdr = os.path.join(_HERE, HEADER_ICON_DIR)
+    wordmark = _render_svg(os.path.join(hdr, HEADER_WORDMARK_SVG), px(279))
+    if wordmark is not None:
+        canvas.paste(wordmark.convert("L"),
+                     (CENTER - wordmark.width // 2, round(y)))
+        y += wordmark.height + px(4)
+    else:
+        # no cairosvg -- fall back to the wordmark as plain text
+        _draw_center(draw, y + px(4), WORDMARK, f["wordmark"])
+        y += px(4) + _line_h(f["wordmark"]) + px(6)
+
+    # mascot (tilted 5 degrees, like the design's rotate(-5deg)) + tagline
+    mascot = _render_svg(os.path.join(hdr, HEADER_MASCOT_SVG), px(104))
+    if mascot is not None:
+        mascot = mascot.rotate(5, resample=Image.BICUBIC, expand=True,
+                               fillcolor=PAPER)
+        mascot = mascot.point(lambda p: INK if p < 128 else PAPER)
+    m_w = mascot.width if mascot is not None else 0
+    m_h = mascot.height if mascot is not None else 0
+    m_gap = px(14) if mascot is not None else 0
+    tri_s = px(8)
+    tag_ls = px(1)
+    tag_max = CONTENT_W - px(12) - m_w - m_gap
+    tag_lines = _wrap_tokens(draw, HEADER_TAGLINE, f["tag"], tag_max, tri_s,
+                             ls=tag_ls)
+    tag_lh = _line_h(f["tag"], 1.15)
+    text_h = tag_lh * len(tag_lines)
+    text_w = max(lw for _, lw in tag_lines)
+    space_w = draw.textlength(" ", font=f["tag"]) + tag_ls
+    row_h = max(m_h, text_h)
+    gx = CENTER - (m_w + m_gap + text_w) / 2
+    if mascot is not None:
+        canvas.paste(mascot.convert("L"),
+                     (round(gx), round(y + (row_h - m_h) / 2)))
+    ty = y + (row_h - text_h) / 2
+    for toks, _lw in tag_lines:
+        cx = gx + m_w + m_gap
+        for tok, w in toks:
+            if tok == "▸":
+                _orn_tri(draw, cx + w / 2, ty + tag_lh * 0.5, tri_s)
+            else:
+                _draw_run(draw, cx, ty, tok, f["tag"], ls=tag_ls)
+            cx += w + space_w
+        ty += tag_lh
+    y += row_h + GAP
+
+    # squiggle divider
+    y = _squiggle_band(draw, y) + GAP
 
     # 2) PHOTO BLOCK with crop marks ----------------------------------------
     block_pad = px(14)
@@ -414,10 +419,8 @@ def build_receipt_image(photo_path, fortune):
     sx = CENTER - total / 2
     _orn_circle(draw, sx + dot_r, y + _line_h(f["stamp"]) * 0.5, dot_r)
     _draw_run(draw, sx + dot_r * 2 + dot_gap, y, stamp, f["stamp"], ls=px(2))
-    y += _line_h(f["stamp"]) + GAP
-
-    # dash band
-    y = _dash_band(draw, y) + GAP
+    # the design runs the fortune header right after the stamp, no divider
+    y += _line_h(f["stamp"]) + px(12)
 
     # 4) FORTUNE BLOCK ------------------------------------------------------
     _draw_center(draw, y, "=== YOUR FORTUNE ===", f["fortune_head"], ls=px(3))
@@ -454,30 +457,10 @@ def build_receipt_image(photo_path, fortune):
     y += _line_h(f["lucky"]) + px(12)
 
     y += GAP
-    # dash band
-    y = _dash_band(draw, y) + GAP
+    # squiggle divider
+    y = _squiggle_band(draw, y) + GAP
 
-    # 5) ITEMIZED BLOCK -----------------------------------------------------
-    item_lh = _line_h(f["item"], 1.0)
-    rows = [("1x PHOTO CAPTURE", "1 PLAY"),
-            ("1x GOOD VIBES", "INCL."),
-            ("1x FORTUNE", "INCL.")]
-    for left_t, right_t in rows:
-        draw.text((LEFT, y), left_t, font=f["item"], fill=INK)
-        rwid = _text_w(draw, right_t, f["item"])
-        draw.text((RIGHT - rwid, y), right_t, font=f["item"], fill=INK)
-        y += item_lh
-    y += px(7)
-    y = _dash_band(draw, y, thick_proto=2, ink_proto=6, gap_proto=4) + px(7)
-    draw.text((LEFT, y), "TOTAL", font=f["total"], fill=INK)
-    rwid = _text_w(draw, "FREE :)", f["total"])
-    draw.text((RIGHT - rwid, y), "FREE :)", font=f["total"], fill=INK)
-    y += _line_h(f["total"]) + GAP
-
-    # dash band
-    y = _dash_band(draw, y) + GAP
-
-    # 6) QR BLOCK -----------------------------------------------------------
+    # 5) QR BLOCK -----------------------------------------------------------
     qr = _qr_image(QR_URL, px(116))
     if qr is not None:
         qx = CENTER - qr.width // 2
@@ -497,10 +480,10 @@ def build_receipt_image(photo_path, fortune):
     _draw_center(draw, y, ARTIST_HANDLE, f["handle"], ls=px(1))
     y += _line_h(f["handle"]) + GAP
 
-    # dash band
-    y = _dash_band(draw, y) + GAP
+    # squiggle divider
+    y = _squiggle_band(draw, y) + px(12)
 
-    # 7) FOOTER -------------------------------------------------------------
+    # 6) FOOTER -------------------------------------------------------------
     _draw_center(draw, y, "PLAYER 1 -- KEEP THIS COPY", f["footer"], ls=px(3))
     y += _line_h(f["footer"]) + px(4)
     sub = "PRESS THE BUTTON TO PLAY AGAIN"
