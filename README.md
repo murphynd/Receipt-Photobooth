@@ -1,5 +1,31 @@
 # Receipt-Photobooth
 
+### A group show by BIZ CLUB, co-curated by Lettie Jane Rennekamp
+
+#### Opening Friday, July 10, 6-9pm;
+
+What was your favorite thing to hold when you were five? What brought you the most joy to watch on your TV screen when you were a teen? What reality would your younger self want to see today?
+
+If we can start to consider our younger selves and all they had to do to bring us here today, the happiness, fear, excitement, and devastation they endured, perhaps some collective healing can come of it. All of these worlds, our past, present, and future, are at play with each other. How do we dig through the past to honor the present?
+
+FEATURING ARTISTS (IN ALPHABETICAL ORDER):
+
+Aaron Piland • Alicia Schultz • Allie Yacina • Anis Mojgani • Aremy Stewart • Breesa Culver • Brianna Luce - Bluce Designs • Christina Mrozik  • Cole Lyons  • Daren Todd • Ellen Blazich • Erika Rier • Jeff Sheridan • Jesse Reno • Joel Fleminger • Jolyn Fry • Julz Clementine • K. Fry • Kacy McKinney • Kirsten Bauer • lark pien • Lauren Blair • Leah Lavelle • Lena Fridman • Lettie Jane Rennekamp • Lori Damiano • Melissa Monroe • Michael Buchino • Rin Noelle • Rue Vashakidze • Sarah Levy • Teeny • Tyler Bingham
+
+Opening Reception
+Friday, July 10, 6–9pm
+
+Closing Reception
+Friday, Aug 7, 5-8pm
+
+Show Dates
+July 10 – August 9
+
+<img width="1617" height="1292" alt="Screenshot 2026-07-08 144601" src="https://github.com/user-attachments/assets/69c7a3f4-87c8-431c-a2cc-e06d3fea3faa" />
+
+
+----------
+### Art Concept:
 This is a much richer frame, and it changes the project meaningfully. You're not really making a toy with backstory — you're making a _device that performs the seduction_ so the viewer feels it in their body, and the artist statement is where the critique lands. The piece is the bait; the statement is the hook. That's a strong structure. Let me reflect the whole thing back and sharpen it.
 
 **The core move.** The sculpture does to the viewer exactly what you're critiquing: it's cute, it flatters you, it wants to be your friend, it offers to know you and tell you your future — and you _like_ it. You walk away charmed. Then the statement reframes that charm as the exact mechanism that 90s "friendly tech" trained us to accept, and that today's AI and surveillance economy exploit at scale. The discomfort isn't in the experience; it's retroactive. You realize you just enjoyed being read. That's far better than a creepy object, because complicity is the point.
