@@ -34,6 +34,13 @@ BYE_WAVS = [                         # one is picked at random after the shutter
 ]
 BECKON_COOLDOWN = 15.0   # seconds before we'll greet/beckon the same person again
 
+# Error cues -- the booth runs headless in the gallery, so it announces trouble
+# out loud (a distinct descending "buzz") instead of only writing to the journal.
+# A boot self-test plays a rising "ready" chime when the printer + audio check
+# out, or the error buzz if something's wrong -- so you can power it on, walk
+# away, and *hear* whether it came up healthy. Set PHOTOBOOTH_ERROR_CUES=0 to mute.
+ERROR_CUES = os.environ.get("PHOTOBOOTH_ERROR_CUES", "1") not in ("0", "false", "False")
+
 # Button arming (button mode only)
 ARM_TIMEOUT = 20.0       # seconds to wait for a press before giving up and re-idling
 

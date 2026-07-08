@@ -29,8 +29,8 @@ from config import (
     PAUSE_BEFORE_BYE,
     PRINTER_BACKEND,
 )
-from audio import play_greeting, play_smile, play_bye, countdown
-from printing import setup_printer, print_receipt
+from audio import play_greeting, play_smile, play_bye, countdown, alert, chime, audio_ok
+from printing import setup_printer, print_receipt, printer_ok
 from hardware import pir, camera, wait_for_trigger, capture_photo, flash_led
 
 
@@ -49,11 +49,46 @@ from hardware import pir, camera, wait_for_trigger, capture_photo, flash_led
 # ----------------------------------------------------------------------------
 # Main loop
 # ----------------------------------------------------------------------------
+def _signal_error(reason):
+    """Announce a fault on a headless booth: the audio buzz + a burst of LED
+    flashes (the LED is the fallback for the one case audio can't cover -- when
+    audio itself is the thing that's broken). Never raises."""
+    try:
+        alert(reason)
+    finally:
+        for _ in range(4):
+            flash_led()
+            time.sleep(0.12)
+
+
+def _boot_selftest(prn):
+    """Check the printer + audio at startup and say so out loud.
+
+    Rising chime = came up healthy; error buzz = something's wrong (and the
+    reason is in the journal). This is the whole point of the cues headless:
+    power on, walk away, and hear whether the booth is good to go.
+    """
+    p_ok, p_reason = printer_ok(prn)
+    a_ok = audio_ok()
+    if p_ok and a_ok:
+        log.info("selftest: OK (printer=%s, audio=OK)", p_reason)
+        chime()
+        return
+    if not p_ok:
+        log.error("selftest: printer NOT ready -- %s", p_reason)
+    if not a_ok:
+        log.error("selftest: audio NOT working -- check volume/device (aplay -l)")
+    # If audio is the failure, the buzz may not be audible either -- the LED
+    # burst inside _signal_error still fires, so there's a visible tell too.
+    _signal_error("boot self-test failed")
+
+
 def main():
     prn = setup_printer()
     where = "console" if prn is None else PRINTER_BACKEND
     log.info("photobooth ready (trigger=%s, printer=%s); waiting for motion",
              INPUT_MODE, where)
+    _boot_selftest(prn)
     try:
         while True:
             # Guard each cycle so one bad capture/print logs and re-arms
@@ -76,7 +111,8 @@ def main():
                 # The photo is only needed to build the receipt; don't keep it
                 # around (storage fills fast). Delete it once the receipt is sent.
                 try:
-                    print_receipt(prn, photo_path, CAPTION)
+                    if not print_receipt(prn, photo_path, CAPTION):
+                        _signal_error("print failed -- receipt did not print")
                 finally:
                     try:
                         os.remove(photo_path)
@@ -92,6 +128,7 @@ def main():
                 raise
             except Exception:
                 log.exception("cycle error; recovering and re-arming")
+                _signal_error("cycle error -- see the journal")
                 time.sleep(2)
     except KeyboardInterrupt:
         log.info("shutting down (keyboard interrupt)")
