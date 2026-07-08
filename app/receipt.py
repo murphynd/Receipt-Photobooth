@@ -90,8 +90,6 @@ def _fonts():
         "lucky": _font(FONT_VT323, 20),
         "qr_cap": _font(FONT_VT323, 19),
         "handle": _font(FONT_VT323, 24),
-        "footer": _font(FONT_VT323, 22),
-        "footer_sub": _font(FONT_VT323, 18),
         "rec": _font(FONT_VT323, 16),
     }
 
@@ -478,23 +476,7 @@ def build_receipt_image(photo_path, fortune):
     _orn_shade(draw, cx + blk + bgap + cw + bgap + blk / 2, ccy, blk)
     y += _line_h(f["qr_cap"]) + px(2)
     _draw_center(draw, y, ARTIST_HANDLE, f["handle"], ls=px(1))
-    y += _line_h(f["handle"]) + GAP
-
-    # squiggle divider
-    y = _squiggle_band(draw, y) + px(12)
-
-    # 6) FOOTER -------------------------------------------------------------
-    _draw_center(draw, y, "PLAYER 1 -- KEEP THIS COPY", f["footer"], ls=px(3))
-    y += _line_h(f["footer"]) + px(4)
-    sub = "PRESS THE BUTTON TO PLAY AGAIN"
-    tri_s = px(10)
-    sgap = px(6)
-    sw = _text_w(draw, sub, f["footer_sub"], ls=px(1))
-    total = tri_s + sgap + sw
-    fx = CENTER - total / 2
-    _orn_tri(draw, fx + tri_s / 2, y + _line_h(f["footer_sub"]) * 0.5, tri_s)
-    _draw_run(draw, fx + tri_s + sgap, y, sub, f["footer_sub"], ls=px(1))
-    y += _line_h(f["footer_sub"]) + PAD_BOTTOM
+    y += _line_h(f["handle"]) + PAD_BOTTOM
 
     # crop to used height and threshold to 1-bit (no dither -- keep text crisp;
     # the photo is already dithered).
