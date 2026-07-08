@@ -136,6 +136,34 @@ Want the journal to survive reboots (default on most Pi OS images, but to be sur
 sudo mkdir -p /var/log/journal && sudo systemctl restart systemd-journald
 ```
 
+### Audio cues — the booth tells you out loud
+
+Because the gallery runs headless (no screen), the booth announces its health
+through the speaker so you don't have to check the journal to know something
+broke:
+
+- **Rising three-note chime at startup** = boot self-test passed: the printer
+  queue is live and audio works. Power it on, hear the chime, walk away.
+- **Low descending "buzz" (+ the button LED flashing)** = something is wrong.
+  It fires at boot if the self-test fails, and during a visit if a receipt
+  doesn't print or a cycle crashes. The reason is always in the journal
+  (`journalctl -u photobooth -e`), e.g. `selftest: printer NOT ready` or
+  `print failed`.
+
+Two failures the cues specifically catch that used to look "fine" in the log:
+
+- **A disabled CUPS queue.** `lp` reports success the moment a job is *queued*,
+  even when the queue is paused — so nothing prints but the log said "receipt
+  sent." The self-test now inspects the queue directly, tries to re-enable it
+  (works without sudo if the service user is in the `lpadmin` group), and buzzes
+  if it's still stuck. Manual fix: `sudo cupsenable POS80_raw && sudo cupsaccept POS80_raw`.
+- **A dead/muted speaker.** `aplay`'s errors used to be discarded; they're now
+  captured and logged, and the self-test blip confirms the device actually opens.
+
+The cues are on by default. To mute them (e.g. a silent bench run) set
+`PHOTOBOOTH_ERROR_CUES=0` — either in the shell for a by-hand run, or as an
+`Environment=` line in `photobooth.service`.
+
 ---
 
 ## 3. Remote access

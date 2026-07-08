@@ -105,6 +105,53 @@ def setup_printer():
     return None
 
 
+def printer_ok(prn):
+    """Boot self-test for the printer. Returns (ok: bool, reason: str).
+
+    The important case is the CUPS backend: ``lp`` reports success the instant a
+    job is *accepted into the queue*, which is NOT the same as printed. If the
+    queue got auto-disabled after an earlier failure (printer off, out of paper,
+    USB hiccup -- CUPS does this and it stays disabled), every job then queues up
+    silently and the log still reads "receipt sent". So we inspect the queue
+    state directly and try to self-heal it once, since that recovers the exact
+    "was working, now nothing prints" symptom on the next service restart.
+    """
+    if PRINTER_BACKEND == "console":
+        return True, "console"
+    if PRINTER_BACKEND != "cups":
+        return (prn is not None), (PRINTER_BACKEND if prn is not None else "init failed")
+
+    try:
+        state = subprocess.run(["lpstat", "-p", CUPS_PRINTER_NAME],
+                               capture_output=True, text=True).stdout.lower()
+        accepting = subprocess.run(["lpstat", "-a", CUPS_PRINTER_NAME],
+                                   capture_output=True, text=True).stdout.lower()
+    except Exception as exc:
+        return False, f"lpstat unavailable ({exc})"
+
+    if not state:
+        return False, f"queue {CUPS_PRINTER_NAME} not found (is it installed?)"
+
+    disabled = "disabled" in state
+    rejecting = "not accepting" in accepting
+    if disabled or rejecting:
+        # Try to self-heal -- works without sudo if the service user is in the
+        # lpadmin group; otherwise it just logs and we report the problem.
+        for cmd in (["cupsenable", CUPS_PRINTER_NAME],
+                    ["cupsaccept", CUPS_PRINTER_NAME]):
+            try:
+                subprocess.run(cmd, capture_output=True, text=True)
+            except Exception:
+                pass
+        state = subprocess.run(["lpstat", "-p", CUPS_PRINTER_NAME],
+                               capture_output=True, text=True).stdout.lower()
+        if "disabled" in state:
+            return False, (f"queue {CUPS_PRINTER_NAME} is disabled -- run "
+                           f"'sudo cupsenable {CUPS_PRINTER_NAME}' on the Pi")
+        log.info("printer: re-enabled queue %s", CUPS_PRINTER_NAME)
+    return True, CUPS_PRINTER_NAME
+
+
 # ----------------------------------------------------------------------------
 # python-escpos rendering (usb/serial/network backends)
 # ----------------------------------------------------------------------------
@@ -193,11 +240,12 @@ def _escpos_receipt_bytes(photo_path, caption, fortune, emoji):
 # Print dispatch
 # ----------------------------------------------------------------------------
 def print_receipt(prn, photo_path, caption):
+    """Print one receipt. Returns True on success, False if it fell back to
+    console (so the caller can fire the headless error cue)."""
     fortune = pick_fortune()
 
     if RECEIPT_STYLE == "scuptee":
-        _print_scuptee(prn, photo_path, fortune)
-        return
+        return _print_scuptee(prn, photo_path, fortune)
 
     emoji = pick_emoji()
 
@@ -213,21 +261,24 @@ def print_receipt(prn, photo_path, caption):
                 check=True,
             )
             log.info("print: receipt sent (cups queue %s)", CUPS_PRINTER_NAME)
+            return True
         except Exception as exc:
             log.error("print: FAILED via cups (%s); dumping to console", exc)
             _console_receipt(photo_path, caption, fortune, emoji)
-        return
+            return False
 
     if prn is None:
         _console_receipt(photo_path, caption, fortune, emoji)
-        return
+        return False
     try:
         _render_receipt(prn, photo_path, caption, fortune, emoji)
         log.info("print: receipt sent (backend %s)", PRINTER_BACKEND)
+        return True
     except Exception as exc:
         log.error("print: FAILED via %s (%s); dumping to console",
                   PRINTER_BACKEND, exc)
         _console_receipt(photo_path, caption, fortune, emoji)
+        return False
 
 
 # ----------------------------------------------------------------------------
@@ -250,23 +301,26 @@ def _print_scuptee(prn, photo_path, fortune):
             subprocess.run(["lp", "-d", CUPS_PRINTER_NAME],
                            input=bytes(out), check=True)
             log.info("print: receipt sent (cups queue %s)", CUPS_PRINTER_NAME)
+            return True
         except Exception as exc:
             log.error("print: FAILED via cups (%s); saving preview", exc)
             _scuptee_console(img, photo_path)
-        return
+            return False
 
     if prn is None:
         _scuptee_console(img, photo_path)
-        return
+        return False
     try:
         prn.set(align="center")
         prn.image(img)
         prn.cut()
         log.info("print: receipt sent (backend %s)", PRINTER_BACKEND)
+        return True
     except Exception as exc:
         log.error("print: FAILED via %s (%s); saving preview",
                   PRINTER_BACKEND, exc)
         _scuptee_console(img, photo_path)
+        return False
 
 
 def _scuptee_console(img, photo_path):
