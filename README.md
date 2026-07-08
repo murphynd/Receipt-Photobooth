@@ -2,7 +2,7 @@
 
 ### A group show by BIZ CLUB, co-curated by Lettie Jane Rennekamp
 
-#### Opening Friday, July 10, 6-9pm;
+#### Opening Friday, July 10, 2026 6-9pm;
 
 What was your favorite thing to hold when you were five? What brought you the most joy to watch on your TV screen when you were a teen? What reality would your younger self want to see today?
 
