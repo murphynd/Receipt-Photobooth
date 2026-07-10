@@ -3,7 +3,7 @@
 
 Flow:
     IDLE      wait for the PIR to see someone
-    BECKON    play the intro greeting + a random beckon clip (rate-limited)
+    BECKON    play a random beckon clip + the intro greeting (rate-limited)
     ARMED     wait for the trigger (keyboard Enter for testing, or a GPIO button)
     COUNTDOWN audible/visible countdown so people can pose
     CAPTURE   take the photo
@@ -96,7 +96,7 @@ def main():
             try:
                 pir.wait_for_motion()
                 log.info("PIR: motion detected")
-                play_greeting()                # intro, then a random beckon
+                play_greeting()                # a random beckon, then the intro
 
                 if not wait_for_trigger():
                     log.info("trigger: none within timeout; standing down")

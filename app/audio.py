@@ -141,10 +141,11 @@ def audio_ok():
 
 
 def play_greeting():
-    """Intro greeting, then one of the beckons at random.
+    """One of the beckons at random, then the intro greeting.
 
     Rate-limited so the same lingering person isn't re-greeted more often than
-    BECKON_COOLDOWN. The intro plays blocking so the beckon doesn't talk over it.
+    BECKON_COOLDOWN. Both clips play blocking so the intro doesn't talk over
+    the beckon, and the caller can wait for the button as soon as this returns.
     """
     global _last_greeting
     now = time.monotonic()
@@ -152,12 +153,14 @@ def play_greeting():
         return
     _last_greeting = now
 
-    log.info("greeting: playing intro")
-    _play_wav(INTRO_WAV, blocking=True)
-
     clip = random.choice(BECKON_WAVS)
     log.info("beckon: playing %s", Path(clip).name)
-    _play_wav(clip)
+    _play_wav(clip, blocking=True)
+
+    time.sleep(0.25)  # brief pause between beckon + intro
+
+    log.info("greeting: playing intro")
+    _play_wav(INTRO_WAV, blocking=True)
 
 
 def play_smile():
