@@ -66,6 +66,16 @@ def wait_for_trigger():
             log.warning("trigger: keyboard mode has no stdin; cannot arm")
             return False
     # button mode
+    # Require a *fresh* press edge: wait_for_press fires immediately if the pin
+    # already reads active (held button, stuck switch, or signal wire on the
+    # microswitch's NC terminal instead of NO). Without this guard any of those
+    # silently auto-triggers every ARMED phase and the booth loops forever.
+    if button.is_pressed:
+        log.warning("armed: button already down (held, stuck, or NC-wired?); "
+                    "waiting for release")
+        if not button.wait_for_release(timeout=ARM_TIMEOUT):
+            log.warning("armed: button never released; standing down")
+            return False
     log.info("armed: waiting for button press (up to %.0fs)", ARM_TIMEOUT)
     pressed = button.wait_for_press(timeout=ARM_TIMEOUT)
     if pressed:
